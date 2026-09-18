@@ -1,0 +1,15 @@
+<template format_id="1.8">
+  <content><![CDATA[Örnek Belge
+Bu metin kalın ve renklidir.
+AdıSoyadıAyşeYılmaz
+Son paragraf.
+]]></content>
+  <properties><pageFormat mediaSizeName="1" topMargin="36" rightMargin="42" bottomMargin="36" leftMargin="42"/></properties>
+  <elements resolver="default">
+    <paragraph Alignment="1" SpaceBelow="18"><content startOffset="0" length="12" size="20" bold="true"/></paragraph>
+    <paragraph SpaceBelow="12"><content startOffset="12" length="9"/><content startOffset="21" length="5" bold="true"/><content startOffset="26" length="4"/><content startOffset="30" length="11" foreground="-65536" underline="true"/></paragraph>
+    <table columnSpans="180,180"><row><cell fillColor="15790320"><paragraph><content startOffset="41" length="3" bold="true"/></paragraph></cell><cell fillColor="15790320"><paragraph><content startOffset="44" length="6" bold="true"/></paragraph></cell></row><row><cell><paragraph><content startOffset="50" length="4"/></paragraph></cell><cell><paragraph><content startOffset="54" length="6"/></paragraph></cell></row></table>
+    <paragraph SpaceAbove="18" Alignment="2"><content startOffset="61" length="14" italic="true"/></paragraph>
+  </elements>
+  <styles><style name="default" family="Times New Roman" size="12"/></styles>
+</template>

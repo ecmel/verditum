@@ -1,0 +1,55 @@
+[package]
+name        = "Verditum"
+version     = "0.1.0"
+edition     = "2021"
+description = "Document Viewer for UYAP"
+license     = "Apache-2.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib", "rlib", "staticlib"]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name       = "verditum_lib"
+
+[dependencies]
+cms                 = "0.2.3"
+der                 = "0.7"
+ring                = "0.17"
+x509-cert           = "0.2"
+log                 = "0.4"
+lopdf               = { version = "0.44", default-features = false }
+fontdb              = "0.23"
+ttf-parser          = "0.25"
+subsetter           = "0.2"
+roxmltree           = "0.21"
+base64              = "0.22"
+image               = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+serde               = { version = "1", features = ["derive"] }
+serde_json          = "1"
+tauri               = { version = "2", features = [] }
+tauri-plugin-dialog = { version = "2", features = [] }
+tauri-plugin-fs     = { version = "2", features = [] }
+tauri-plugin-log    = { version = "2", features = [] }
+tauri-plugin-opener = { version = "2", features = [] }
+tauri-plugin-shell  = { version = "2", features = [] }
+tauri-plugin-view   = { version = "0.0.5", features = [] }
+zip                 = { version = "2", features = [] }
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-updater = { version = "2", features = [] }
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[profile.dev]
+incremental = true  # Compile your binary in smaller steps.
+
+[profile.release]
+opt-level     = "s"      # Prioritizes small binary size. Use `3` if you prefer speed.
+strip         = true     # Ensures debug symbols are removed.
+lto           = true     # Enables link-time-optimizations.
+panic         = "abort"  # Higher performance by disabling panic handlers.
+codegen-units = 1        # Allows LLVM to perform better optimization.

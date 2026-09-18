@@ -1,0 +1,60 @@
+{
+  "name": "@ecmel/verditum",
+  "description": "Document Viewer for UYAP",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "author": {
+    "name": "Ecmel Ercan",
+    "url": "https://ecmel.dev"
+  },
+  "type": "module",
+  "prettier": {
+    "proseWrap": "always",
+    "printWidth": 80
+  },
+  "scripts": {
+    "update": "ncu -u --target minor --reject sass-embedded",
+    "license-header": "node scripts/license-header.mjs",
+    "format": "prettier --write . && cargo +nightly fmt --manifest-path src-tauri/Cargo.toml",
+    "clean": "git clean -Xfd",
+    "init": "tauri ios init",
+    "postinit": "tauri icon --ios-color=#fff assets/icon.svg && node package-init.js",
+    "debug": "tauri dev",
+    "debug-ios": "tauri ios dev",
+    "release": "tauri build",
+    "release-ios": "tauri ios build --export-method debugging",
+    "typecheck": "tsc && tsc -p test/tsconfig.json",
+    "pretest": "npm run typecheck",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "coverage": "npm run test:coverage",
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "dev:web": "vite --config vite.web.config.ts",
+    "build:web": "vite build --config vite.web.config.ts",
+    "preview:web": "vite preview --config vite.web.config.ts",
+    "preview": "vite preview",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "2.11.1",
+    "@tauri-apps/plugin-dialog": "2.7.3",
+    "@tauri-apps/plugin-fs": "2.5.2",
+    "@tauri-apps/plugin-log": "2.9.1",
+    "@tauri-apps/plugin-shell": "2.3.6"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.11.4",
+    "@vitest/browser-playwright": "4.1.11",
+    "@vitest/coverage-v8": "4.1.11",
+    "lit": "3.3.3",
+    "npm-check-updates": "23.1.0",
+    "open-props": "1.7.23",
+    "playwright": "1.63.0",
+    "prettier": "3.9.6",
+    "typescript": "5.9.3",
+    "vite": "8.3.0",
+    "vitest": "4.1.11"
+  }
+}

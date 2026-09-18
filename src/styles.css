@@ -1,0 +1,55 @@
+@import "open-props/sizes";
+@import "open-props/fonts";
+@import "open-props/borders";
+@import "open-props/easings";
+@import "open-props/gray";
+@import "open-props/blue";
+@import "open-props/red";
+
+:root {
+  --property-font-size: 16px;
+  color-scheme: light;
+  /* Matches the document page, which dark mode inverts to black. */
+  --surface: white;
+  --surface-raised: white;
+  --text: var(--gray-9);
+  --text-muted: var(--gray-7);
+  --border: var(--gray-4);
+  --accent: var(--blue-7);
+  --accent-hover: var(--blue-8);
+  --on-accent: white;
+  --danger: var(--red-8);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface: black;
+  --surface-raised: var(--gray-9);
+  --text: var(--gray-1);
+  --text-muted: var(--gray-5);
+  --border: var(--gray-7);
+  --accent: var(--blue-7);
+  --accent-hover: var(--blue-6);
+  --danger: var(--red-5);
+}
+
+html,
+body {
+  margin: 0;
+  overscroll-behavior: none;
+  font-size: var(--property-font-size);
+  line-height: var(--font-lineheight-4);
+}
+
+body {
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  padding: 0 var(--size-1);
+  font-family: var(--font-sans);
+  font-weight: var(--font-weight-4);
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  color: var(--text);
+  background-color: var(--surface);
+}

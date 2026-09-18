@@ -1,0 +1,4 @@
+[format.rules]
+key-value-equals-sign-alignment = true
+line-width                      = 120
+trailing-comment-alignment      = true

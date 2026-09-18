@@ -1,0 +1,216 @@
+# Builds desktop and Android packages. Pushing a `v*` tag also drafts a
+# GitHub release with every package attached; a manual run only uploads them as
+# workflow artifacts. The tag must be `v` followed by the version in
+# src-tauri/tauri.conf.json.
+#
+# Desktop builds are also signed for the updater, and the release carries the
+# updater manifest, latest.json. Installed apps see a release once it is
+# published, not while it is a draft.
+#
+# macOS apps are signed with the Developer ID certificate and notarized.
+# Without that, Gatekeeper reports a downloaded app as damaged.
+#
+# Repository secrets:
+#   TAURI_SIGNING_PRIVATE_KEY           contents of the updater private key file
+#   TAURI_SIGNING_PRIVATE_KEY_PASSWORD  its password; leave unset if it has none
+#   APPLE_CERTIFICATE                   base64 of the Developer ID Application
+#                                       certificate and private key (.p12)
+#   APPLE_CERTIFICATE_PASSWORD          password set when exporting the .p12
+#   APPLE_SIGNING_IDENTITY              the certificate's full name
+#   APPLE_ID                            Apple ID used for notarization
+#   APPLE_PASSWORD                      app-specific password for that Apple ID
+#   APPLE_TEAM_ID                       the developer team id
+#   ANDROID_KEYSTORE                    base64 of ~/upload-keystore.jks
+#   ANDROID_CERTIFICATE_PASSWORD        keystore and key password (alias `upload`)
+
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  desktop:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS arm64
+            runner: macos-latest
+            target: aarch64-apple-darwin
+          - name: macOS x86_64
+            runner: macos-latest
+            target: x86_64-apple-darwin
+          - name: Windows x86_64
+            runner: windows-latest
+            target: x86_64-pc-windows-msvc
+            args: --bundles nsis
+          - name: Windows arm64
+            runner: windows-latest
+            target: aarch64-pc-windows-msvc
+            args: --bundles nsis
+          - name: Linux x86_64
+            runner: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+            args: --bundles appimage
+          - name: Linux arm64
+            runner: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            args: --bundles appimage
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+          key: ${{ matrix.target }}
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libxdo-dev libssl-dev librsvg2-dev patchelf xdg-utils
+      - run: npm ci
+      # The bundler treats an APPLE_* variable that is set but empty as set, so
+      # the secrets go into the job environment only when they have values.
+      # The heredoc form keeps a multi-line base64 certificate intact. Tauri
+      # imports the certificate into a temporary keychain, signs the .app,
+      # notarizes it and staples the ticket before it builds the .dmg and the
+      # updater tarball.
+      - name: Configure Apple code signing
+        if: runner.os == 'macOS'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          put() { printf '%s<<APPLE_ENV_EOF\n%s\nAPPLE_ENV_EOF\n' "$1" "$2" >> "$GITHUB_ENV"; }
+
+          if [ -z "$APPLE_CERTIFICATE" ] || [ -z "$APPLE_SIGNING_IDENTITY" ]; then
+            echo "::warning::no Apple certificate configured - macOS bundles will be unsigned"
+            exit 0
+          fi
+          put APPLE_CERTIFICATE "$APPLE_CERTIFICATE"
+          put APPLE_CERTIFICATE_PASSWORD "$APPLE_CERTIFICATE_PASSWORD"
+          put APPLE_SIGNING_IDENTITY "$APPLE_SIGNING_IDENTITY"
+
+          # The bundler fails on an Apple ID and password without a team id.
+          if [ -n "$APPLE_ID" ] && [ -n "$APPLE_PASSWORD" ] && [ -n "$APPLE_TEAM_ID" ]; then
+            put APPLE_ID "$APPLE_ID"
+            put APPLE_PASSWORD "$APPLE_PASSWORD"
+            put APPLE_TEAM_ID "$APPLE_TEAM_ID"
+          else
+            echo "::warning::no notarization credentials - macOS bundles will be signed but not notarized"
+          fi
+      - run:
+          npx tauri build --target ${{ matrix.target }} --config
+          src-tauri/tauri.updater.conf.json ${{ matrix.args }}
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD:
+            ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+      # Tauri leaves the .dmg itself un-notarized, and Gatekeeper checks a
+      # downloaded disk image on its own.
+      - name: Notarize the disk image
+        if: runner.os == 'macOS' && env.APPLE_ID != ''
+        run: |
+          for dmg in src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg; do
+            xcrun notarytool submit "$dmg" \
+              --apple-id "$APPLE_ID" \
+              --password "$APPLE_PASSWORD" \
+              --team-id "$APPLE_TEAM_ID" \
+              --wait
+            xcrun stapler staple "$dmg"
+          done
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.target }}
+          if-no-files-found: error
+          path: |
+            src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
+            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app.tar.gz
+            src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.exe
+            src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage
+            src-tauri/target/${{ matrix.target }}/release/bundle/*/*.sig
+
+  android:
+    name: Android
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+      - name: Use preinstalled NDK
+        run: echo "NDK_HOME=$ANDROID_NDK_LATEST_HOME" >> "$GITHUB_ENV"
+      - run: npm ci
+      # package-init.js points Gradle at ~/upload-keystore.jks.
+      - name: Restore signing keystore
+        run:
+          echo "$ANDROID_KEYSTORE" | base64 --decode >
+          "$HOME/upload-keystore.jks"
+        env:
+          ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+      - name: Generate Android project
+        run: |
+          npx tauri android init --ci --skip-targets-install
+          npx tauri icon --ios-color=#fff assets/icon.svg
+          node package-init.js
+        env:
+          ANDROID_CERTIFICATE_PASSWORD:
+            ${{ secrets.ANDROID_CERTIFICATE_PASSWORD }}
+      - run: npx tauri android build --apk --split-per-abi --target aarch64
+      - uses: actions/upload-artifact@v7
+        with:
+          name: android
+          if-no-files-found: error
+          path: src-tauri/gen/android/app/build/outputs/apk/*/release/*.apk
+
+  release:
+    name: Draft release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [desktop, android]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      # Each job's artifact lands in its own directory, which names the
+      # updater platform.
+      - uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+      - run:
+          node scripts/release-assets.mjs artifacts release "$GITHUB_REF_NAME"
+      - uses: softprops/action-gh-release@v3
+        with:
+          draft: true
+          files: release/*
