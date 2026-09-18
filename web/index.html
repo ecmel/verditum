@@ -26,6 +26,7 @@
       <nav aria-label="Ana gezinme">
         <a href="#ozellikler">Özellikler</a>
         <a href="#sorular">Sorular</a>
+        <a href="#indir">İndir</a>
         <a class="nav-source" href="https://github.com/ecmel/verditum"
           >Kaynak Kodu <span aria-hidden="true">↗</span></a
         >
@@ -37,13 +38,13 @@
           <p class="eyebrow">
             <span class="status-dot"></span> UYAP BELGELERİ İÇİN
           </p>
-          <h1 id="hero-title">Belgenizi açın.<br /><em>İşinize bakın.</em></h1>
+          <h1 id="hero-title">Belgenizi açın,<br /><em>hemen okuyun.</em></h1>
           <p class="intro">
             UDF belgelerinizi okumak için sade bir alan. Verditum ile dosyanızı
             açın, rahatça inceleyin ve PDF olarak paylaşın.
           </p>
           <div class="hero-actions">
-            <a class="button" href="https://github.com/ecmel/verditum/releases"
+            <a class="button" href="#indir"
               >Verditum'u İndirin <span aria-hidden="true">↓</span></a
             ><a class="text-link" href="#ozellikler"
               >Yakından Tanıyın <span aria-hidden="true">↗</span></a
@@ -161,9 +162,12 @@
           <details>
             <summary>Nasıl indirebilirim?</summary>
             <p>
-              GitHub sürümler sayfasında yayımlanan paketlerden cihazınıza uygun
-              olanı seçin. Kullanılabilir platformları ve kurulum bilgilerini
-              ilgili sürümün açıklamasında bulabilirsiniz.
+              <a href="#indir">İndirme bölümünden</a> cihazınıza uygun paketi
+              seçin. Önceki sürümleri ve sürüm notlarını
+              <a href="https://github.com/ecmel/verditum/releases"
+                >GitHub sürümler sayfasında</a
+              >
+              bulabilirsiniz.
             </p>
           </details>
           <details>
@@ -177,15 +181,63 @@
           </details>
         </div>
       </section>
-      <section class="download wrap" aria-labelledby="download-title">
+      <section
+        id="indir"
+        class="download wrap"
+        aria-labelledby="download-title"
+      >
         <div>
           <p class="eyebrow">BİR SONRAKİ BELGENİZ İÇİN</p>
           <h2 id="download-title">Daha sade bir başlangıç.</h2>
           <p>Verditum'u edinin, belgenize odaklanın.</p>
         </div>
-        <a class="button" href="https://github.com/ecmel/verditum/releases"
-          >Sürümleri ve İndirmeleri Görün <span aria-hidden="true">↗</span></a
-        >
+        <div class="platforms">
+          <article>
+            <h3>macOS</h3>
+            <a
+              href="https://github.com/ecmel/verditum/releases/latest/download/Verditum_macos_arm64.dmg"
+              >Apple Silicon
+              <small>DMG <span aria-hidden="true">↓</span></small></a
+            ><a
+              href="https://github.com/ecmel/verditum/releases/latest/download/Verditum_macos_x64.dmg"
+              >Intel <small>DMG <span aria-hidden="true">↓</span></small></a
+            >
+          </article>
+          <article>
+            <h3>Windows</h3>
+            <a
+              href="https://github.com/ecmel/verditum/releases/latest/download/Verditum_windows_x64-setup.exe"
+              >x64 <small>EXE <span aria-hidden="true">↓</span></small></a
+            ><a
+              href="https://github.com/ecmel/verditum/releases/latest/download/Verditum_windows_arm64-setup.exe"
+              >ARM64 <small>EXE <span aria-hidden="true">↓</span></small></a
+            >
+          </article>
+          <article>
+            <h3>Linux</h3>
+            <a
+              href="https://github.com/ecmel/verditum/releases/latest/download/Verditum_linux_x64.AppImage"
+              >x64 <small>AppImage <span aria-hidden="true">↓</span></small></a
+            ><a
+              href="https://github.com/ecmel/verditum/releases/latest/download/Verditum_linux_arm64.AppImage"
+              >ARM64
+              <small>AppImage <span aria-hidden="true">↓</span></small></a
+            >
+          </article>
+          <article>
+            <h3>Android</h3>
+            <a
+              href="https://github.com/ecmel/verditum/releases/latest/download/Verditum_android_arm64.apk"
+              >ARM64 <small>APK <span aria-hidden="true">↓</span></small></a
+            >
+          </article>
+        </div>
+        <p class="all-releases">
+          Önceki sürümler ve sürüm notları için
+          <a href="https://github.com/ecmel/verditum/releases"
+            >GitHub sürümler sayfası <span aria-hidden="true">↗</span></a
+          >
+        </p>
       </section>
     </main>
     <footer class="footer wrap">

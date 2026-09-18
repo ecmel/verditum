@@ -303,20 +303,45 @@ details[open] summary::after {
 .questions p {
   margin: 0 var(--size-5) var(--size-5) 0;
 }
-.questions a {
+.questions a,
+.all-releases a {
   text-decoration: underline;
 }
 .download {
   border-block: var(--border-size-1) solid var(--line);
   padding-block: var(--size-8);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--size-7);
 }
 .download p:last-child {
   color: var(--text-2);
   font-size: var(--font-size-1);
+}
+.platforms {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--size-7);
+  margin-block: var(--size-8) var(--size-7);
+}
+.platforms h3 {
+  margin-block: 0 var(--size-2);
+}
+.platforms a {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--size-3);
+  padding-block: var(--size-3);
+  border-bottom: var(--border-size-1) solid var(--line);
+  font-size: var(--font-size-1);
+  text-decoration: none;
+}
+.platforms a:hover,
+.all-releases a:hover {
+  color: var(--brand);
+}
+.platforms small {
+  font-size: var(--font-size-0);
+  letter-spacing: var(--font-letterspacing-4);
+  color: var(--brand);
 }
 .footer {
   display: flex;
@@ -350,6 +375,9 @@ details[open] summary::after {
   }
   .local-label {
     display: none;
+  }
+  .platforms {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 @media (max-width: 700px) {
@@ -402,9 +430,10 @@ details[open] summary::after {
     gap: var(--size-4);
     padding-block: var(--size-9);
   }
-  .download {
-    align-items: flex-start;
-    flex-direction: column;
+  .platforms {
+    grid-template-columns: 1fr;
+    gap: var(--size-5);
+    margin-top: var(--size-7);
   }
   .footer {
     flex-wrap: wrap;

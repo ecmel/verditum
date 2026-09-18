@@ -28,9 +28,22 @@ const platforms = {
   "aarch64-unknown-linux-gnu": "linux-aarch64",
 };
 
+// Asset names carry no version, so the website can link to the latest
+// release's packages at releases/latest/download/<name>.
+const systems = {
+  "aarch64-apple-darwin": "macos_arm64",
+  "x86_64-apple-darwin": "macos_x64",
+  "x86_64-pc-windows-msvc": "windows_x64",
+  "aarch64-pc-windows-msvc": "windows_arm64",
+  "x86_64-unknown-linux-gnu": "linux_x64",
+  "aarch64-unknown-linux-gnu": "linux_arm64",
+  android: "android_arm64",
+};
+const types = [".app.tar.gz", "-setup.exe", ".dmg", ".AppImage", ".apk"];
+
 // Installed apps compare their own version with the manifest's, so a tag that
 // differs from the built version would offer the same update forever.
-const { version } = JSON.parse(
+const { productName, version } = JSON.parse(
   await fs.readFile("src-tauri/tauri.conf.json", "utf-8"),
 );
 if (tag !== `v${version}`) {
@@ -46,6 +59,14 @@ async function files(dir) {
     }),
   );
   return nested.flat();
+}
+
+function assetName(job, file) {
+  const type = types.find((type) => file.endsWith(type));
+  if (!systems[job] || !type) {
+    throw new Error(`Unexpected release artifact: ${file}`);
+  }
+  return `${productName}_${systems[job]}${type}`;
 }
 
 async function copy(file, name) {
@@ -64,26 +85,18 @@ const manifest = {
 for (const job of await fs.readdir(artifacts)) {
   const all = await files(path.join(artifacts, job));
   const signatures = all.filter((file) => file.endsWith(".sig"));
-  const updates = signatures.map((file) => file.slice(0, -".sig".length));
   for (const file of all) {
-    if (!signatures.includes(file) && !updates.includes(file)) {
-      await copy(file, path.basename(file));
-    }
+    if (!signatures.includes(file)) await copy(file, assetName(job, file));
   }
 
   const platform = platforms[job];
-  if (!platform && !updates.length) continue;
-  if (!platform || updates.length !== 1) {
+  if (!platform && !signatures.length) continue;
+  const update = signatures[0]?.slice(0, -".sig".length);
+  if (!platform || signatures.length !== 1 || !all.includes(update)) {
     throw new Error(`Expected one updater artifact per desktop job: ${job}`);
   }
 
-  let name = path.basename(updates[0]);
-  // macOS archives carry only the app name, the same for every architecture.
-  if (name.endsWith(".app.tar.gz")) {
-    const arch = platform.split("-")[1];
-    name = `${name.slice(0, -".app.tar.gz".length)}_${version}_${arch}.app.tar.gz`;
-  }
-  await copy(updates[0], name);
+  const name = assetName(job, update);
   await copy(signatures[0], `${name}.sig`);
 
   manifest.platforms[platform] = {
